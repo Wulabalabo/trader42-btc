@@ -1,0 +1,15 @@
+{
+  "name": "FOMC Dovish Pivot - Mar 2025",
+  "marketSnapshot": {
+    "dxyChange": -0.9,
+    "nqChangePct": 2.1,
+    "etfNetFlowUsd": 120000000,
+    "oiChangePct": 3.2,
+    "fundingRate": 0.005,
+    "liquidationIntensity": 0.1,
+    "volumeChangePct": 60
+  },
+  "expectedRegime": "macro-led",
+  "expectedPrimaryDriver": "macro",
+  "expectedTradeAdvice": "standard"
+}

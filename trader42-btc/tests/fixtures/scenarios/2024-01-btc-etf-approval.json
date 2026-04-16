@@ -1,0 +1,15 @@
+{
+  "name": "BTC ETF Approval - Jan 2024",
+  "marketSnapshot": {
+    "dxyChange": -0.15,
+    "nqChangePct": 0.8,
+    "etfNetFlowUsd": 450000000,
+    "oiChangePct": 8.5,
+    "fundingRate": 0.012,
+    "liquidationIntensity": 0.3,
+    "volumeChangePct": 180
+  },
+  "expectedRegime": "flow-led",
+  "expectedPrimaryDriver": "flow",
+  "expectedTradeAdvice": "standard"
+}

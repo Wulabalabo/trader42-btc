@@ -1,0 +1,12 @@
+.worktrees/
+worktrees/
+trader42-btc/node_modules/
+.next/
+dist/
+coverage/
+test-results/
+playwright-report/
+.env
+.env.local
+.env.*.local
+docs/
