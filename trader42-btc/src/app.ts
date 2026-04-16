@@ -5,7 +5,7 @@ import { initDb } from './lib/db.js';
 const env = buildEnv(process.env);
 initDb(env.DB_PATH);
 
-const server = buildServer();
+const server = await buildServer();
 
 server.listen({ port: env.PORT, host: '0.0.0.0' }, (err, address) => {
   if (err) {
