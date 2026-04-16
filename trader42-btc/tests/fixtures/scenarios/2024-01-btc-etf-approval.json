@@ -9,7 +9,50 @@
     "liquidationIntensity": 0.3,
     "volumeChangePct": 180
   },
+  "replay": {
+    "driverPool": {
+      "previousDriverKeys": ["etf-flow"],
+      "macroEvents": [],
+      "topN": 3
+    },
+    "triggerInput": {
+      "return1m": 3.5,
+      "priceZScore": 2.8,
+      "volumeZScore": 3,
+      "fundingMean": 0.005,
+      "basisPct": 0.8,
+      "basisMean": 0.3,
+      "liquidationUsd1h": 50000000,
+      "liquidationMean": 20000000,
+      "xResonance": 0.8
+    },
+    "xEvents": [
+      { "id": "e2e-001", "text": "BREAKING: SEC officially approves first BTC spot ETF. IBIT trading begins tomorrow.", "userName": "DeItaone", "sourceTier": "journalist", "createdAt": "2024-01-10T16:00:00Z", "isRetweet": false, "isQuote": false },
+      { "id": "e2e-002", "text": "BlackRock ETF approval confirms spot BTC demand is opening up.", "userName": "EricBalchunas", "sourceTier": "journalist", "createdAt": "2024-01-10T16:03:00Z", "isRetweet": false, "isQuote": false },
+      { "id": "e2e-003", "text": "Major ETF desks say BTC spot approval is unlocking institutional demand now.", "userName": "BitMEXResearch", "sourceTier": "journalist", "createdAt": "2024-01-10T16:04:00Z", "isRetweet": false, "isQuote": false },
+      { "id": "e2e-004", "text": "ETF desks report strong BTC spot demand after approval headlines.", "userName": "lookonchain", "sourceTier": "analyst", "createdAt": "2024-01-10T16:05:00Z", "isRetweet": false, "isQuote": false },
+      { "id": "e2e-005", "text": "Traders see record ETF inflow expectations for BTC after approval.", "userName": "EmberCN", "sourceTier": "analyst", "createdAt": "2024-01-10T16:06:00Z", "isRetweet": false, "isQuote": false },
+      { "id": "e2e-006", "text": "DocumentingBTC says ETF approval is spreading fast across market desks.", "userName": "DocumentingBTC", "sourceTier": "kol", "createdAt": "2024-01-10T16:07:00Z", "isRetweet": false, "isQuote": false }
+    ],
+    "narrativeInput": {
+      "firstEventMinutesAgo": 30,
+      "latestEventMinutesAgo": 5,
+      "totalUniqueAccounts": 8,
+      "positioningConfirmation": 0.6,
+      "marketLinkageConfirmation": 0.6
+    },
+    "confirmationInput": {
+      "priceChange5m": 0.012,
+      "priceChange1h": 0.025,
+      "volumeChange": 1.5,
+      "basisPct": 0.8,
+      "spotVsPerp": 0.8
+    },
+    "referencePrice": 95000
+  },
   "expectedRegime": "flow-led",
   "expectedPrimaryDriver": "flow",
-  "expectedTradeAdvice": "standard"
+  "expectedTopDriver": "etf-flow",
+  "expectedTradeAdvice": "standard",
+  "expectedDirection": "long"
 }

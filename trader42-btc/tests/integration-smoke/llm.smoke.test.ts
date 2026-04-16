@@ -20,7 +20,7 @@ describe('LLM Gateway smoke tests', { tags: ['smoke'] }, () => {
     expect(result.usedModel).toBe('deepseek');
   });
 
-  it('calls gpt-4o-mini and gets a response', async () => {
+  it('calls gpt-5.4-mini and gets a response', async () => {
     const policy = getStepLlmPolicy('step2');
     const result = await gateway.complete({
       model: policy.model,

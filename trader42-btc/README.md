@@ -28,14 +28,19 @@ Single TypeScript backend handling ingestion, scoring, LLM orchestration, APIs, 
 ```
 Binance WS/REST ─────────────┐
 Data Proxy (OpenBB/AKTools) ─┤──► Step 0: Market Regime
-twitterapi.io ───────────────┤       ↓
+twitterapi.io ───────────────┤──► Step 1: Driver Pool
+                             │       ↓
                              │   Step 1.5: Trigger Gate
                              │       ↓
                              └──► Step 2: X Event Capture
-                          ↓
-                      Step 5: Trade Advice
-                          ↓
-                      Shadow Book (SQLite)
+                                     ↓
+                                 Step 3: Narrative
+                                     ↓
+                                 Step 4: Confirmation
+                                     ↓
+                                 Step 5: Trade Advice
+                                     ↓
+                              Shadow Book + Weekly Audit
 ```
 
 ---
@@ -115,7 +120,7 @@ DEEPSEEK_API_KEY=sk-...                           # DeepSeek API key
 | `DATA_PROXY_URL` | **Yes** | — | Docker auth-proxy URL (fronts OpenBB + AKTools) |
 | `DATA_PROXY_TOKEN` | **Yes** | — | Bearer token for auth-proxy |
 | `TWITTER_API_KEY` | **Yes** | — | twitterapi.io API key |
-| `OPENAI_API_KEY` | **Yes** | — | OpenAI API key (gpt-4o-mini) |
+| `OPENAI_API_KEY` | **Yes** | — | OpenAI API key (gpt-5.4-mini) |
 | `DEEPSEEK_API_KEY` | **Yes** | — | DeepSeek API key (deepseek-chat) |
 
 ---
@@ -139,6 +144,12 @@ pnpm test:watch
 
 The server starts at `http://localhost:3000` (or your configured `PORT`).
 
+For proxy-backed data sources, requests go through:
+- `http://<proxy-host>:8088/openbb/...`
+- `http://<proxy-host>:8088/aktools/...`
+
+All proxy requests must include `Authorization: Bearer <DATA_PROXY_TOKEN>`.
+
 ---
 
 ## API Reference
@@ -158,7 +169,7 @@ Health check endpoint.
 
 #### `GET /api/v1/status`
 
-Service status with loaded modules.
+Service status with per-module freshness and degraded-state reporting.
 
 ```json
 // Response
@@ -166,7 +177,36 @@ Service status with loaded modules.
   "service": "trader42-btc",
   "uptime": 123.456,
   "timestamp": "2026-04-16T12:00:00.000Z",
-  "modules": ["market-regime", "trigger-gate", "x-events", "trade-advice"]
+  "modules": [
+    "marketRegime",
+    "driverPool",
+    "triggerGate",
+    "xEvents",
+    "narrativeScoring",
+    "confirmation",
+    "tradeAdvice",
+    "shadowBook",
+    "weeklyAudit"
+  ],
+  "pipeline": {
+    "overall": "degraded",
+    "modules": {
+      "marketRegime": {
+        "state": "healthy",
+        "lastUpdatedAt": "2026-04-16T11:59:30.000Z",
+        "freshnessSec": 30,
+        "staleAfterSec": 1800,
+        "reason": null
+      },
+      "xEvents": {
+        "state": "degraded",
+        "lastUpdatedAt": "2026-04-16T10:00:00.000Z",
+        "freshnessSec": 7200,
+        "staleAfterSec": 300,
+        "reason": "stale snapshot: 7200s old"
+      }
+    }
+  }
 }
 ```
 
@@ -740,23 +780,23 @@ npx vitest run tests/e2e/
 
 # Run smoke tests (requires real API credentials + running services)
 pnpm test:smoke
+
+# Run replay + product contract coverage explicitly
+npx vitest run tests/e2e/pipeline.test.ts tests/e2e/fullPipelineReplay.test.ts tests/contracts/productContracts.test.ts
 ```
 
-**Test counts (Phase 1):**
+**Coverage highlights:**
 
-| Module | Tests |
-|--------|-------|
-| Market Regime | 12 |
-| Trigger Gate | 12 |
-| X Events | 23 |
-| Trade Advice | 11 |
-| E2E Pipeline | 2 |
-| Helpers / Config | 2 |
-| **Total** | **62** |
+- Unit + route coverage for Step 0 → 5, shadow-book, weekly audit, and status freshness
+- Replay coverage for full Step 0 → 1 → 1.5 → 2 → 3 → 4 → 5 fixture runs
+- Product contract checks for replay fixtures and Step 5 fields
 
 **E2E scenarios:**
 - `2024-01-btc-etf-approval.json` — ETF approval, massive inflow, flow-led regime → standard advice
 - `2025-03-fomc-dovish.json` — FOMC dovish pivot, macro-led regime → standard advice
+- `2024-08-carry-trade-unwind.json` — cross-asset deleveraging, macro risk-off → light short advice
+- `2025-06-exchange-hack.json` — hack-driven liquidation chain, positioning-led regime → avoid / observe posture
+- `2026-02-narrative-only-fakeout.json` — hot narrative without confirmation → capped at ignore/watch/light
 
 ---
 
@@ -809,11 +849,20 @@ trader42-btc/
 │       │   ├── xEvent.dedup.ts             # ID + Jaccard text dedup
 │       │   ├── xEvent.service.ts           # Clean → dedup → classify pipeline
 │       │   └── xEvent.route.ts             # POST /api/v1/x-events
+│       ├── driver-pool/                    # Step 1
+│       ├── narrative/                      # Step 3
+│       ├── confirmation/                   # Step 4
 │       └── trade-advice/                   # Step 5
 │           ├── tradeAdvice.types.ts        # TradeAdvice contract
 │           ├── tradeAdvice.policy.ts       # Layered-cap policy engine
 │           ├── tradeAdvice.service.ts      # Full pipeline orchestration
 │           └── tradeAdvice.route.ts        # POST /api/v1/trade-advice
+│       └── shadow-book/                    # Shadow trades + weekly audit
+│           ├── shadowBook.types.ts
+│           ├── shadowBook.service.ts
+│           ├── shadowBook.route.ts
+│           ├── weeklyAudit.service.ts
+│           └── weeklyAudit.route.ts
 ├── db/
 │   ├── schema.sql                          # 6-table SQLite schema
 │   └── migrations/                         # Future migrations
@@ -848,24 +897,36 @@ Complete data flow for generating a trade recommendation:
    └── twitterapi.io → tweets from 10 curated accounts
 
 2. STEP 0: MARKET REGIME
-   Input:  MarketSnapshotInput (7 fields)
-   Output: RegimeOutput { market_regime, risk_environment, btc_state }
+    Input:  MarketSnapshotInput (7 fields)
+    Output: RegimeOutput { market_regime, risk_environment, btc_state }
 
-3. STEP 1.5: TRIGGER GATE
-   Input:  TriggerInput (11 fields, real-time)
-   Output: TriggerOutput { triggered, case_label, priority }
+3. STEP 1: DRIVER POOL
+   Input:  Regime + flow / macro / positioning context
+   Output: candidate_btc_drivers[]
 
-4. STEP 2: X EVENT CAPTURE
-   Input:  Raw tweets (batch)
-   Output: XEventOutput[] { event_type, btc_bias, first_order, urgency }
+4. STEP 1.5: TRIGGER GATE
+    Input:  TriggerInput (11 fields, real-time)
+    Output: TriggerOutput { triggered, case_label, priority }
 
-5. STEP 5: TRADE ADVICE
-   Input:  PipelineInput (aggregated Steps 0 + 1.5 + 2)
-   Output: TradeAdvice { trade_level, direction, risk_budget_pct, invalidators }
+5. STEP 2: X EVENT CAPTURE
+    Input:  Raw tweets (batch)
+    Output: XEventOutput[] { event_type, btc_bias, first_order, urgency }
 
-6. PERSIST
+6. STEP 3: NARRATIVE SCORING
+   Input:  X events + diffusion + market linkage
+   Output: NarrativeOutput { theme, narrative_stage, actionability_ceiling }
+
+7. STEP 4: CONFIRMATION
+   Input:  Price / flow / positioning confirmation inputs
+   Output: ConfirmationOutput { confirmation_mode, tradeability, direction_bias }
+
+8. STEP 5: TRADE ADVICE
+   Input:  Aggregated Steps 0 → 4 + X-event bias
+   Output: TradeAdvice { tradeability, direction, risk_budget, invalidators }
+
+9. PERSIST + REVIEW
    └── SQLite: market_snapshots → regime_snapshots → trigger_snapshots
-               x_events → trade_advice → shadow_book
+               x_events → trade_advice → shadow_book → weekly audit
 ```
 
 ---

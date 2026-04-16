@@ -1,6 +1,9 @@
 import type { FastifyInstance } from 'fastify';
 import { processRawTweet } from './xEvent.service.js';
 import type { XEventOutput } from './xEvent.types.js';
+import { XEventRepository } from './xEvent.repository.js';
+
+const defaultXEventRepository = new XEventRepository();
 
 export async function registerXEventRoutes(server: FastifyInstance) {
   // POST: Submit raw tweet(s) for processing
@@ -20,11 +23,14 @@ export async function registerXEventRoutes(server: FastifyInstance) {
     const results: XEventOutput[] = [];
 
     for (const tweet of tweets) {
-      const event = processRawTweet({
-        ...tweet,
-        isRetweet: tweet.isRetweet ?? false,
-        isQuote: tweet.isQuote ?? false,
-      });
+      const event = await processRawTweet(
+        {
+          ...tweet,
+          isRetweet: tweet.isRetweet ?? false,
+          isQuote: tweet.isQuote ?? false,
+        },
+        { repository: defaultXEventRepository },
+      );
       if (event) results.push(event);
     }
 

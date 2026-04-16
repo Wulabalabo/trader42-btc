@@ -6,8 +6,8 @@ describe('processRawTweet', () => {
     resetDedup();
   });
 
-  it('processes a valid SEC tweet into XEventOutput', () => {
-    const result = processRawTweet({
+  it('processes a valid SEC tweet into XEventOutput', async () => {
+    const result = await processRawTweet({
       id: 'tw-001',
       text: 'SEC files official amendment to BTC spot ETF rule change',
       userName: 'SECGov',
@@ -22,7 +22,7 @@ describe('processRawTweet', () => {
     expect(result!.first_order_event).toBe(true);
   });
 
-  it('returns null for duplicate tweets', () => {
+  it('returns null for duplicate tweets', async () => {
     const tweet = {
       id: 'tw-002',
       text: 'FOMC cuts rate by 50bp in surprise move',
@@ -32,15 +32,15 @@ describe('processRawTweet', () => {
       isRetweet: false,
       isQuote: false,
     };
-    const first = processRawTweet(tweet);
+    const first = await processRawTweet(tweet);
     expect(first).not.toBeNull();
 
-    const second = processRawTweet(tweet);
+    const second = await processRawTweet(tweet);
     expect(second).toBeNull();
   });
 
-  it('returns null for too-short cleaned text', () => {
-    const result = processRawTweet({
+  it('returns null for too-short cleaned text', async () => {
+    const result = await processRawTweet({
       id: 'tw-003',
       text: '🚨🔥 https://t.co/abc',
       userName: 'someone',
@@ -52,8 +52,8 @@ describe('processRawTweet', () => {
     expect(result).toBeNull();
   });
 
-  it('marks retweets as non-first-order', () => {
-    const result = processRawTweet({
+  it('marks retweets as non-first-order', async () => {
+    const result = await processRawTweet({
       id: 'tw-004',
       text: 'RT @DeItaone: Breaking news on crypto regulation from SEC',
       userName: 'SomeUser',
@@ -66,8 +66,8 @@ describe('processRawTweet', () => {
     expect(result!.first_order_event).toBe(false);
   });
 
-  it('detects stale screenshots', () => {
-    const result = processRawTweet({
+  it('detects stale screenshots', async () => {
+    const result = await processRawTweet({
       id: 'tw-005',
       text: 'Look at this screenshot from Jan 2024 showing BTC price action',
       userName: 'SomeAnalyst',

@@ -9,7 +9,50 @@
     "liquidationIntensity": 0.1,
     "volumeChangePct": 60
   },
+  "replay": {
+    "driverPool": {
+      "previousDriverKeys": ["fed-rates"],
+      "macroEvents": [{ "type": "FOMC", "hoursUntil": 12 }],
+      "topN": 3
+    },
+    "triggerInput": {
+      "return1m": 2,
+      "priceZScore": 2.2,
+      "volumeZScore": 1.5,
+      "fundingMean": 0.005,
+      "basisPct": 0.4,
+      "basisMean": 0.3,
+      "liquidationUsd1h": 10000000,
+      "liquidationMean": 20000000,
+      "xResonance": 0.6
+    },
+    "xEvents": [
+      { "id": "e2e-fomc-001", "text": "FOMC DECISION: Fed cuts rate by 50bp, signals more cuts ahead. Dovish statement.", "userName": "NickTimiraos", "sourceTier": "journalist", "createdAt": "2025-03-19T18:00:00Z", "isRetweet": false, "isQuote": false },
+      { "id": "e2e-fomc-002", "text": "Fed signals easier policy path and dovish risk tone for BTC.", "userName": "DeItaone", "sourceTier": "journalist", "createdAt": "2025-03-19T18:02:00Z", "isRetweet": false, "isQuote": false },
+      { "id": "e2e-fomc-003", "text": "Macro reporters say dovish FOMC language is pushing BTC risk appetite higher.", "userName": "BitMEXResearch", "sourceTier": "journalist", "createdAt": "2025-03-19T18:03:00Z", "isRetweet": false, "isQuote": false },
+      { "id": "e2e-fomc-004", "text": "Analysts expect lower rates to extend BTC macro breakout.", "userName": "VeloData", "sourceTier": "analyst", "createdAt": "2025-03-19T18:04:00Z", "isRetweet": false, "isQuote": false },
+      { "id": "e2e-fomc-005", "text": "Macro desks see dovish FOMC feeding BTC continuation trade.", "userName": "ki_young_ju", "sourceTier": "analyst", "createdAt": "2025-03-19T18:05:00Z", "isRetweet": false, "isQuote": false },
+      { "id": "e2e-fomc-006", "text": "BTC community is amplifying the dovish Fed narrative tonight.", "userName": "BitcoinMagazine", "sourceTier": "kol", "createdAt": "2025-03-19T18:06:00Z", "isRetweet": false, "isQuote": false }
+    ],
+    "narrativeInput": {
+      "firstEventMinutesAgo": 30,
+      "latestEventMinutesAgo": 5,
+      "totalUniqueAccounts": 8,
+      "positioningConfirmation": 0.55,
+      "marketLinkageConfirmation": 0.55
+    },
+    "confirmationInput": {
+      "priceChange5m": 0.01,
+      "priceChange1h": 0.024,
+      "volumeChange": 1.4,
+      "basisPct": 0.4,
+      "spotVsPerp": 0.4
+    },
+    "referencePrice": 82000
+  },
   "expectedRegime": "macro-led",
   "expectedPrimaryDriver": "macro",
-  "expectedTradeAdvice": "standard"
+  "expectedTopDriver": "fed-rates",
+  "expectedTradeAdvice": "standard",
+  "expectedDirection": "long"
 }

@@ -1,7 +1,8 @@
 import type { XEventOutput } from './xEvent.types.js';
 import { cleanRawTweet } from './xEvent.cleaner.js';
-import { classifyXEventRule } from './xEvent.classifier.js';
+import { classifyXEvent } from './xEvent.classifier.js';
 import { isDuplicate } from './xEvent.dedup.js';
+import type { XEventRepository } from './xEvent.repository.js';
 
 interface RawTweetInput {
   id: string;
@@ -18,7 +19,22 @@ const seenIds = new Set<string>();
 const seenTexts: string[] = [];
 const MAX_SEEN_TEXTS = 500;
 
-export function processRawTweet(input: RawTweetInput): XEventOutput | null {
+export async function processRawTweet(
+  input: RawTweetInput,
+  options: {
+    gateway?: {
+      completeForStep: (
+        step: 'step2',
+        request: {
+          messages: Array<{ role: string; content: string }>;
+          maxTokens?: number;
+          temperature?: number;
+        },
+      ) => Promise<{ content: string }>;
+    };
+    repository?: XEventRepository;
+  } = {},
+): Promise<XEventOutput | null> {
   if (isDuplicate(input.id, input.text, seenIds, seenTexts)) {
     return null;
   }
@@ -34,11 +50,14 @@ export function processRawTweet(input: RawTweetInput): XEventOutput | null {
     return null;
   }
 
-  const classification = classifyXEventRule({
-    cleanedText: cleaned.cleanedText,
-    sourceTier: input.sourceTier,
-    isFirstOrderCandidate: cleaned.firstOrderCandidate,
-  });
+  const classification = await classifyXEvent(
+    {
+      cleanedText: cleaned.cleanedText,
+      sourceTier: input.sourceTier,
+      isFirstOrderCandidate: cleaned.firstOrderCandidate,
+    },
+    { gateway: options.gateway },
+  );
 
   // Track for dedup
   seenIds.add(input.id);
@@ -49,7 +68,7 @@ export function processRawTweet(input: RawTweetInput): XEventOutput | null {
 
   const novelty = cleaned.possibleStaleScreenshot ? 'stale-screenshot' as const : classification.novelty;
 
-  return {
+  const output = {
     timestamp: input.createdAt || new Date().toISOString(),
     asset: 'BTC',
     event_type: classification.event_type,
@@ -61,7 +80,10 @@ export function processRawTweet(input: RawTweetInput): XEventOutput | null {
     btc_bias: classification.btc_bias,
     urgency: classification.urgency,
     confidence: classification.confidence,
-  };
+  } satisfies XEventOutput;
+
+  options.repository?.save(output);
+  return output;
 }
 
 export function resetDedup() {

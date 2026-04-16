@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { classifyXEventRule } from '../../src/modules/x-events/xEvent.classifier.js';
+import { classifyXEvent, classifyXEventRule } from '../../src/modules/x-events/xEvent.classifier.js';
 
 describe('classifyXEventRule', () => {
   it('classifies SEC filing tweet as regulation + first-order', () => {
@@ -60,5 +60,50 @@ describe('classifyXEventRule', () => {
       isFirstOrderCandidate: false,
     });
     expect(result.event_type).toBe('unknown');
+  });
+
+  it('uses LLM JSON classification when available', async () => {
+    const result = await classifyXEvent(
+      {
+        cleanedText: 'SEC approves BTC ETF',
+        sourceTier: 'journalist',
+        isFirstOrderCandidate: true,
+      },
+      {
+        gateway: {
+          completeForStep: async () => ({
+            content:
+              '{"event_type":"regulation","source_credibility_score":0.75,"first_order_event":true,"btc_bias":"bullish","novelty":"new","urgency":2,"confidence":0.88}',
+            usedModel: 'openai',
+            inputTokens: 0,
+            outputTokens: 0,
+          }),
+        },
+      },
+    );
+
+    expect(result.event_type).toBe('regulation');
+    expect(result.first_order_event).toBe(true);
+    expect(result.confidence).toBe(0.88);
+  });
+
+  it('falls back to rule classification when the LLM call fails', async () => {
+    const result = await classifyXEvent(
+      {
+        cleanedText: 'IBIT saw $450M inflow today',
+        sourceTier: 'journalist',
+        isFirstOrderCandidate: true,
+      },
+      {
+        gateway: {
+          completeForStep: async () => {
+            throw new Error('boom');
+          },
+        },
+      },
+    );
+
+    expect(result.event_type).toBe('ETF');
+    expect(result.btc_bias).toBe('bullish');
   });
 });

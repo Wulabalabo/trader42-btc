@@ -29,7 +29,7 @@ const ENDPOINTS: Record<string, string> = {
 };
 
 const MODELS: Record<string, string> = {
-  openai: 'gpt-4o-mini',
+  openai: 'gpt-5.4-mini',
   deepseek: 'deepseek-chat',
 };
 
@@ -69,18 +69,22 @@ export class LLMGateway {
   ): Promise<CompletionResponse> {
     const apiKey =
       provider === 'openai' ? this.config.openaiApiKey : this.config.deepseekApiKey;
+    const body = {
+      model: MODELS[provider],
+      messages: req.messages,
+      temperature: req.temperature ?? 0.3,
+      ...(provider === 'openai'
+        ? { max_completion_tokens: req.maxTokens ?? 512 }
+        : { max_tokens: req.maxTokens ?? 512 }),
+    };
+
     const res = await fetch(ENDPOINTS[provider], {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({
-        model: MODELS[provider],
-        messages: req.messages,
-        max_tokens: req.maxTokens ?? 512,
-        temperature: req.temperature ?? 0.3,
-      }),
+      body: JSON.stringify(body),
     });
     if (!res.ok) throw new Error(`LLM ${provider} error: ${res.status} ${await res.text()}`);
     const data = (await res.json()) as {

@@ -1,13 +1,20 @@
 import type { FastifyInstance } from 'fastify';
 import { evaluateTriggerGate } from './trigger.service.js';
 import type { TriggerInput } from './trigger.types.js';
+import { TriggerRepository } from './trigger.repository.js';
+import { TriggerRuntime } from './trigger.runtime.js';
+
+const defaultTriggerRepository = new TriggerRepository();
+export const defaultTriggerRuntime = new TriggerRuntime(defaultTriggerRepository);
 
 export async function registerTriggerRoutes(server: FastifyInstance) {
   server.post<{ Body: TriggerInput }>('/api/v1/trigger-gate', async (request) => {
-    return evaluateTriggerGate(request.body);
+    const result = evaluateTriggerGate(request.body);
+    defaultTriggerRepository.save(result);
+    return result;
   });
 
   server.get('/api/v1/trigger-gate', async () => {
-    return { message: 'Use POST with trigger input data, or wait for real-time WS evaluation' };
+    return defaultTriggerRuntime.getLatest() ?? defaultTriggerRepository.getLatest() ?? { message: 'No trigger snapshot yet' };
   });
 }

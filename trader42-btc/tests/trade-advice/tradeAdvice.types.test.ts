@@ -6,7 +6,10 @@ describe('serializeTradeAdvice', () => {
     const result = serializeTradeAdvice();
     expect(result.asset).toBe('BTC');
     expect(result).toHaveProperty('market_regime');
+    expect(result).toHaveProperty('driver');
     expect(result).toHaveProperty('direction');
+    expect(result).toHaveProperty('tradeability');
+    expect(result).toHaveProperty('risk_budget');
     expect(result).toHaveProperty('trade_level');
     expect(result).toHaveProperty('risk_budget_pct');
     expect(result).toHaveProperty('confirmation_mode');

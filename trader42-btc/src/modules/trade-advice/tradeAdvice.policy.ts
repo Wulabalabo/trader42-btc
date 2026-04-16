@@ -8,6 +8,7 @@ export interface PolicyInput {
   positioningHeat: number;
   themeProbability: number;
   continuationProbability: number;
+  directionBias?: Direction;
 }
 
 export interface PolicyOutput {
@@ -52,7 +53,8 @@ export function decideTradeAdvice(input: PolicyInput): PolicyOutput {
   const capped = capLevel(rawLevel, input.narrativeCeiling);
 
   // Direction: observe for ignore/watch
-  const direction: Direction = capped === 'ignore' || capped === 'watch' ? 'observe' : 'long';
+  const direction: Direction =
+    capped === 'ignore' || capped === 'watch' ? 'observe' : input.directionBias === 'short' ? 'short' : 'long';
 
   // Risk budget with regime adjustment
   let riskBudget = RISK_BUDGET[capped] ?? 0;

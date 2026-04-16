@@ -1,0 +1,55 @@
+{
+  "name": "Major Exchange Hack - Jun 2025",
+  "marketSnapshot": {
+    "dxyChange": 0.2,
+    "nqChangePct": -1.3,
+    "etfNetFlowUsd": -150000000,
+    "oiChangePct": 12,
+    "fundingRate": -0.04,
+    "liquidationIntensity": 1,
+    "volumeChangePct": 260
+  },
+  "replay": {
+    "driverPool": {
+      "previousDriverKeys": ["positioning-squeeze"],
+      "topN": 3
+    },
+    "triggerInput": {
+      "return1m": -4.2,
+      "priceZScore": 3.3,
+      "volumeZScore": 3.4,
+      "fundingMean": -0.003,
+      "basisPct": 0.1,
+      "basisMean": 0.2,
+      "liquidationUsd1h": 90000000,
+      "liquidationMean": 20000000,
+      "xResonance": 0.85
+    },
+    "xEvents": [
+      { "id": "hack-1", "text": "BREAKING: major crypto exchange hack triggers urgent BTC sell pressure.", "userName": "DeItaone", "sourceTier": "journalist", "createdAt": "2025-06-18T09:00:00Z", "isRetweet": false, "isQuote": false },
+      { "id": "hack-2", "text": "Security incident forces traders to de-risk BTC and unwind leverage.", "userName": "BitMEXResearch", "sourceTier": "journalist", "createdAt": "2025-06-18T09:02:00Z", "isRetweet": false, "isQuote": false },
+      { "id": "hack-3", "text": "Analysts say the exchange hack is now a first-order BTC risk event.", "userName": "VeloData", "sourceTier": "analyst", "createdAt": "2025-06-18T09:03:00Z", "isRetweet": false, "isQuote": false },
+      { "id": "hack-4", "text": "Lookonchain reports panic withdrawals and positioning stress after the hack.", "userName": "lookonchain", "sourceTier": "analyst", "createdAt": "2025-06-18T09:04:00Z", "isRetweet": false, "isQuote": false },
+      { "id": "hack-5", "text": "Retail BTC feeds are amplifying the exchange hack panic.", "userName": "DocumentingBTC", "sourceTier": "kol", "createdAt": "2025-06-18T09:06:00Z", "isRetweet": false, "isQuote": false }
+    ],
+    "narrativeInput": {
+      "firstEventMinutesAgo": 25,
+      "latestEventMinutesAgo": 3,
+      "totalUniqueAccounts": 7,
+      "positioningConfirmation": 0.75,
+      "marketLinkageConfirmation": 0.75
+    },
+    "confirmationInput": {
+      "priceChange5m": -0.026,
+      "priceChange1h": -0.041,
+      "volumeChange": 2.4,
+      "basisPct": 0.1,
+      "spotVsPerp": -0.7
+    },
+    "referencePrice": 57500
+  },
+  "expectedRegime": "positioning-led",
+  "expectedTopDriver": "positioning-squeeze",
+  "expectedTradeAdvice": "avoid",
+  "expectedDirection": "observe"
+}

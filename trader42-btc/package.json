@@ -10,7 +10,7 @@
     "start": "node dist/app.js",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:smoke": "vitest run --tags smoke"
+    "test:smoke": "vitest run tests/integration-smoke"
   },
   "dependencies": {
     "better-sqlite3": "^11.7.0",

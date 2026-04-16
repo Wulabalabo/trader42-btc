@@ -1,0 +1,56 @@
+{
+  "name": "JPY Carry Trade Unwind - Aug 2024",
+  "marketSnapshot": {
+    "dxyChange": 1.1,
+    "nqChangePct": -3.8,
+    "etfNetFlowUsd": -90000000,
+    "oiChangePct": 2,
+    "fundingRate": -0.002,
+    "liquidationIntensity": 0.3,
+    "volumeChangePct": 190
+  },
+  "replay": {
+    "driverPool": {
+      "previousDriverKeys": ["fed-rates"],
+      "macroEvents": [{ "type": "BOJ", "hoursUntil": 6 }],
+      "topN": 3
+    },
+    "triggerInput": {
+      "return1m": -2.8,
+      "priceZScore": 2.5,
+      "volumeZScore": 2.8,
+      "fundingMean": 0.001,
+      "basisPct": 0.2,
+      "basisMean": 0.2,
+      "liquidationUsd1h": 35000000,
+      "liquidationMean": 18000000,
+      "xResonance": 0.7
+    },
+    "xEvents": [
+      { "id": "carry-1", "text": "Macro desks say the carry unwind is forcing BTC lower as risk assets delever.", "userName": "NickTimiraos", "sourceTier": "journalist", "createdAt": "2024-08-05T12:00:00Z", "isRetweet": false, "isQuote": false },
+      { "id": "carry-2", "text": "DXY spike and cross-asset liquidation are hitting BTC positioning hard.", "userName": "DeItaone", "sourceTier": "journalist", "createdAt": "2024-08-05T12:02:00Z", "isRetweet": false, "isQuote": false },
+      { "id": "carry-3", "text": "Carry unwind pressure is spreading across BTC macro desks.", "userName": "BitMEXResearch", "sourceTier": "journalist", "createdAt": "2024-08-05T12:03:00Z", "isRetweet": false, "isQuote": false },
+      { "id": "carry-4", "text": "Analysts see risk-off deleveraging extending BTC downside.", "userName": "VeloData", "sourceTier": "analyst", "createdAt": "2024-08-05T12:04:00Z", "isRetweet": false, "isQuote": false },
+      { "id": "carry-5", "text": "BTC community is now echoing the carry unwind bearish narrative.", "userName": "BitcoinMagazine", "sourceTier": "kol", "createdAt": "2024-08-05T12:06:00Z", "isRetweet": false, "isQuote": false }
+    ],
+    "narrativeInput": {
+      "firstEventMinutesAgo": 35,
+      "latestEventMinutesAgo": 5,
+      "totalUniqueAccounts": 8,
+      "positioningConfirmation": 0.7,
+      "marketLinkageConfirmation": 0.7
+    },
+    "confirmationInput": {
+      "priceChange5m": -0.015,
+      "priceChange1h": -0.028,
+      "volumeChange": 1.6,
+      "basisPct": 0.2,
+      "spotVsPerp": 0.4
+    },
+    "referencePrice": 61000
+  },
+  "expectedRegime": "macro-led",
+  "expectedTopDriver": "fed-rates",
+  "expectedTradeAdvice": "light",
+  "expectedDirection": "short"
+}

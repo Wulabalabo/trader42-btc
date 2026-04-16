@@ -28,14 +28,19 @@
 ```
 Binance WS/REST ─────────────┐
 Data Proxy（OpenBB/AKTools）─┤──► Step 0: Market Regime
-twitterapi.io ───────────────┤       ↓
+twitterapi.io ───────────────┤──► Step 1: Driver Pool
+                             │       ↓
                              │   Step 1.5: Trigger Gate
                              │       ↓
                              └──► Step 2: X Event Capture
-                          ↓
-                      Step 5: Trade Advice
-                          ↓
-                      Shadow Book (SQLite)
+                                     ↓
+                                 Step 3: Narrative
+                                     ↓
+                                 Step 4: Confirmation
+                                     ↓
+                                 Step 5: Trade Advice
+                                     ↓
+                              Shadow Book + Weekly Audit
 ```
 
 ---
@@ -115,7 +120,7 @@ DEEPSEEK_API_KEY=sk-...                           # DeepSeek API Key
 | `DATA_PROXY_URL` | **是** | — | Data Proxy 地址（统一代理 OpenBB + AKTools） |
 | `DATA_PROXY_TOKEN` | **是** | — | Data Proxy 的 Bearer Token |
 | `TWITTER_API_KEY` | **是** | — | twitterapi.io API Key |
-| `OPENAI_API_KEY` | **是** | — | OpenAI API Key（gpt-4o-mini） |
+| `OPENAI_API_KEY` | **是** | — | OpenAI API Key（gpt-5.4-mini） |
 | `DEEPSEEK_API_KEY` | **是** | — | DeepSeek API Key（deepseek-chat） |
 
 ---
@@ -139,6 +144,12 @@ pnpm test:watch
 
 服务默认启动在 `http://localhost:3000`（或你配置的 `PORT`）。
 
+对于代理数据源，请通过以下路径访问：
+- `http://<proxy-host>:8088/openbb/...`
+- `http://<proxy-host>:8088/aktools/...`
+
+所有代理请求都必须带上 `Authorization: Bearer <DATA_PROXY_TOKEN>`。
+
 ---
 
 ## API 参考
@@ -158,7 +169,7 @@ pnpm test:watch
 
 #### `GET /api/v1/status`
 
-返回服务状态与已加载模块。
+返回服务状态、模块 freshness，以及降级原因。
 
 ```json
 // 响应
@@ -166,7 +177,36 @@ pnpm test:watch
   "service": "trader42-btc",
   "uptime": 123.456,
   "timestamp": "2026-04-16T12:00:00.000Z",
-  "modules": ["market-regime", "trigger-gate", "x-events", "trade-advice"]
+  "modules": [
+    "marketRegime",
+    "driverPool",
+    "triggerGate",
+    "xEvents",
+    "narrativeScoring",
+    "confirmation",
+    "tradeAdvice",
+    "shadowBook",
+    "weeklyAudit"
+  ],
+  "pipeline": {
+    "overall": "degraded",
+    "modules": {
+      "marketRegime": {
+        "state": "healthy",
+        "lastUpdatedAt": "2026-04-16T11:59:30.000Z",
+        "freshnessSec": 30,
+        "staleAfterSec": 1800,
+        "reason": null
+      },
+      "xEvents": {
+        "state": "degraded",
+        "lastUpdatedAt": "2026-04-16T10:00:00.000Z",
+        "freshnessSec": 7200,
+        "staleAfterSec": 300,
+        "reason": "stale snapshot: 7200s old"
+      }
+    }
+  }
 }
 ```
 
@@ -740,23 +780,23 @@ npx vitest run tests/e2e/
 
 # 运行 smoke tests（需要真实 API 凭据和已启动的服务）
 pnpm test:smoke
+
+# 单独运行 replay + 产品契约覆盖
+npx vitest run tests/e2e/pipeline.test.ts tests/e2e/fullPipelineReplay.test.ts tests/contracts/productContracts.test.ts
 ```
 
-**测试数量（Phase 1）：**
+**覆盖重点：**
 
-| 模块 | 测试数 |
-|------|--------|
-| Market Regime | 12 |
-| Trigger Gate | 12 |
-| X Events | 23 |
-| Trade Advice | 11 |
-| E2E Pipeline | 2 |
-| Helpers / Config | 2 |
-| **总计** | **62** |
+- Step 0 → 5、shadow-book、weekly audit、status freshness 的单元与路由覆盖
+- 完整 Step 0 → 1 → 1.5 → 2 → 3 → 4 → 5 的 replay fixture 覆盖
+- replay fixture 与 Step 5 字段的产品契约校验
 
 **E2E 场景：**
 - `2024-01-btc-etf-approval.json` - ETF 批准、巨量净流入、flow-led 市场状态 → standard 建议
 - `2025-03-fomc-dovish.json` - FOMC 偏鸽转向、macro-led 市场状态 → standard 建议
+- `2024-08-carry-trade-unwind.json` - 跨资产去杠杆，macro risk-off → light short 建议
+- `2025-06-exchange-hack.json` - 交易所被盗触发清算链，positioning-led 市场状态 → avoid / observe 姿态
+- `2026-02-narrative-only-fakeout.json` - 只有叙事、没有确认 → 最高只到 ignore/watch/light
 
 ---
 
@@ -809,11 +849,20 @@ trader42-btc/
 │       │   ├── xEvent.dedup.ts             # ID + Jaccard 文本去重
 │       │   ├── xEvent.service.ts           # 清洗 → 去重 → 分类流水线
 │       │   └── xEvent.route.ts             # POST /api/v1/x-events
+│       ├── driver-pool/                    # 步骤 1
+│       ├── narrative/                      # 步骤 3
+│       ├── confirmation/                   # 步骤 4
 │       └── trade-advice/                   # 步骤 5
 │           ├── tradeAdvice.types.ts        # TradeAdvice 合约
 │           ├── tradeAdvice.policy.ts       # 分层上限策略引擎
 │           ├── tradeAdvice.service.ts      # 完整流水线编排
 │           └── tradeAdvice.route.ts        # POST /api/v1/trade-advice
+│       └── shadow-book/                    # 影子交易 + 每周审计
+│           ├── shadowBook.types.ts
+│           ├── shadowBook.service.ts
+│           ├── shadowBook.route.ts
+│           ├── weeklyAudit.service.ts
+│           └── weeklyAudit.route.ts
 ├── db/
 │   ├── schema.sql                          # 6 表 SQLite schema
 │   └── migrations/                         # 未来迁移
@@ -851,21 +900,33 @@ trader42-btc/
    输入：MarketSnapshotInput（7 个字段）
    输出：RegimeOutput { market_regime, risk_environment, btc_state }
 
-3. STEP 1.5: TRIGGER GATE
+3. STEP 1: DRIVER POOL
+   输入：Regime + 资金流 / 宏观 / 仓位上下文
+   输出：candidate_btc_drivers[]
+
+4. STEP 1.5: TRIGGER GATE
    输入：TriggerInput（11 个字段，实时）
    输出：TriggerOutput { triggered, case_label, priority }
 
-4. STEP 2: X EVENT CAPTURE
+5. STEP 2: X EVENT CAPTURE
    输入：原始推文（批量）
    输出：XEventOutput[] { event_type, btc_bias, first_order, urgency }
 
-5. STEP 5: TRADE ADVICE
-   输入：PipelineInput（聚合了步骤 0 + 1.5 + 2）
-   输出：TradeAdvice { trade_level, direction, risk_budget_pct, invalidators }
+6. STEP 3: NARRATIVE SCORING
+   输入：X 事件 + 扩散 + 市场联动
+   输出：NarrativeOutput { theme, narrative_stage, actionability_ceiling }
 
-6. PERSIST
+7. STEP 4: CONFIRMATION
+   输入：价格 / 资金流 / 仓位确认输入
+   输出：ConfirmationOutput { confirmation_mode, tradeability, direction_bias }
+
+8. STEP 5: TRADE ADVICE
+   输入：聚合后的步骤 0 → 4 + X-event bias
+   输出：TradeAdvice { tradeability, direction, risk_budget, invalidators }
+
+9. PERSIST + REVIEW
    └── SQLite：market_snapshots → regime_snapshots → trigger_snapshots
-               x_events → trade_advice → shadow_book
+               x_events → trade_advice → shadow_book → weekly audit
 ```
 
 ---

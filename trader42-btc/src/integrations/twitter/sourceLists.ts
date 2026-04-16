@@ -1,30 +1,41 @@
 export interface SourceAccount {
-  userName: string;
+  username: string;
   tier: 'official' | 'journalist' | 'analyst' | 'kol';
-  list: 'A' | 'B' | 'C';
-  description: string;
+  pollIntervalSec: number;
 }
 
-/** List A: Macro / Policy / ETF primary sources */
-export const LIST_A: SourceAccount[] = [
-  { userName: 'NickTimiraos', tier: 'journalist', list: 'A', description: 'WSJ Fed reporter' },
-  { userName: 'DeItaone', tier: 'journalist', list: 'A', description: 'Walter Bloomberg - breaking news' },
-  { userName: 'EricBalchunas', tier: 'analyst', list: 'A', description: 'Bloomberg ETF analyst' },
-  { userName: 'JSeyff', tier: 'analyst', list: 'A', description: 'Bloomberg ETF analyst' },
-];
+export const SOURCE_LISTS = {
+  A: [
+    { username: 'NickTimiraos', tier: 'journalist', pollIntervalSec: 60 },
+    { username: 'DeItaone', tier: 'journalist', pollIntervalSec: 30 },
+    { username: 'EricBalchunas', tier: 'journalist', pollIntervalSec: 60 },
+    { username: 'JSeyff', tier: 'journalist', pollIntervalSec: 60 },
+    { username: 'BitMEXResearch', tier: 'analyst', pollIntervalSec: 120 },
+  ] as SourceAccount[],
+  B: [
+    { username: 'whale_alert', tier: 'analyst', pollIntervalSec: 60 },
+    { username: 'lookonchain', tier: 'analyst', pollIntervalSec: 60 },
+    { username: 'EmberCN', tier: 'analyst', pollIntervalSec: 60 },
+    { username: 'ki_young_ju', tier: 'analyst', pollIntervalSec: 120 },
+    { username: 'VeloData', tier: 'analyst', pollIntervalSec: 120 },
+  ] as SourceAccount[],
+  C: [
+    { username: 'DocumentingBTC', tier: 'kol', pollIntervalSec: 300 },
+    { username: 'BitcoinMagazine', tier: 'kol', pollIntervalSec: 300 },
+    { username: 'APompliano', tier: 'kol', pollIntervalSec: 300 },
+  ] as SourceAccount[],
+} as const;
 
-/** List B: BTC market professionals */
-export const LIST_B: SourceAccount[] = [
-  { userName: 'glaborborn', tier: 'analyst', list: 'B', description: 'Glassnode co-founder' },
-  { userName: 'whale_alert', tier: 'analyst', list: 'B', description: 'Large tx tracker' },
-  { userName: 'VeloData', tier: 'analyst', list: 'B', description: 'Derivatives data' },
-];
+export const LIST_A = SOURCE_LISTS.A;
+export const LIST_B = SOURCE_LISTS.B;
+export const LIST_C = SOURCE_LISTS.C;
+export const ALL_SOURCES: SourceAccount[] = [...SOURCE_LISTS.A, ...SOURCE_LISTS.B, ...SOURCE_LISTS.C];
 
-/** List C: BTC high-impact accounts */
-export const LIST_C: SourceAccount[] = [
-  { userName: 'saborofficial', tier: 'official', list: 'C', description: 'MicroStrategy' },
-  { userName: 'BitcoinMagazine', tier: 'kol', list: 'C', description: 'Bitcoin Magazine' },
-  { userName: 'APompliano', tier: 'kol', list: 'C', description: 'Anthony Pompliano' },
-];
+export function getSourceTier(username: string): SourceAccount['tier'] {
+  const account = ALL_SOURCES.find((item) => item.username.toLowerCase() === username.toLowerCase());
+  return account?.tier ?? 'kol';
+}
 
-export const ALL_SOURCES: SourceAccount[] = [...LIST_A, ...LIST_B, ...LIST_C];
+export function getAllAccounts(): SourceAccount[] {
+  return ALL_SOURCES;
+}

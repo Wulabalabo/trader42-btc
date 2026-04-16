@@ -6,14 +6,12 @@ describe('Twitter smoke tests', { tags: ['smoke'] }, () => {
   const client = new TwitterApiIoClient(apiKey);
 
   it('searches BTC-related tweets', async () => {
-    const result = await client.searchRecent('BTC OR Bitcoin', 5);
-    expect(result).toHaveProperty('tweets');
-    expect(Array.isArray(result.tweets)).toBe(true);
+    const result = await client.searchTweets('BTC OR Bitcoin', { count: 5 });
+    expect(Array.isArray(result)).toBe(true);
   });
 
   it('fetches tweets from a known account', async () => {
-    const result = await client.getUserTweets('BitcoinMagazine', 5);
-    expect(result).toHaveProperty('tweets');
-    expect(Array.isArray(result.tweets)).toBe(true);
+    const result = await client.getUserLastTweets('BitcoinMagazine', 5);
+    expect(Array.isArray(result)).toBe(true);
   });
 });

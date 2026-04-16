@@ -6,6 +6,9 @@ export interface TradeAdvice {
   timestamp: string;
   asset: 'BTC';
   market_regime: string;
+  driver: string;
+  tradeability: TradeLevel;
+  risk_budget: number;
   active_driver: string;
   direction: Direction;
   trade_level: TradeLevel;
@@ -30,6 +33,9 @@ export const serializeTradeAdvice = (overrides?: Partial<TradeAdvice>): TradeAdv
     timestamp: new Date().toISOString(),
     asset: 'BTC',
     market_regime: 'mixed',
+    driver: '',
+    tradeability: 'ignore',
+    risk_budget: 0,
     active_driver: '',
     direction: 'observe',
     trade_level: 'ignore',
@@ -48,6 +54,15 @@ export const serializeTradeAdvice = (overrides?: Partial<TradeAdvice>): TradeAdv
     review_required: true,
     ...overrides,
   };
+  if (!overrides?.driver && base.active_driver) {
+    base.driver = base.active_driver;
+  }
+  if (!overrides?.tradeability) {
+    base.tradeability = base.trade_level;
+  }
+  if (!overrides?.risk_budget) {
+    base.risk_budget = base.risk_budget_pct;
+  }
   // Standard trades always require review
   if (base.trade_level === 'standard') {
     base.review_required = true;

@@ -1,0 +1,53 @@
+{
+  "name": "Narrative-Only Fakeout - Feb 2026",
+  "marketSnapshot": {
+    "dxyChange": -0.05,
+    "nqChangePct": 0.2,
+    "etfNetFlowUsd": 10000000,
+    "oiChangePct": 0.5,
+    "fundingRate": 0.001,
+    "liquidationIntensity": 0.05,
+    "volumeChangePct": 25
+  },
+  "replay": {
+    "driverPool": {
+      "previousDriverKeys": [],
+      "topN": 3
+    },
+    "triggerInput": {
+      "return1m": 0.2,
+      "priceZScore": 0.4,
+      "volumeZScore": 0.5,
+      "fundingMean": 0.001,
+      "basisPct": 0.2,
+      "basisMean": 0.2,
+      "liquidationUsd1h": 1000000,
+      "liquidationMean": 8000000,
+      "xResonance": 0.75
+    },
+    "xEvents": [
+      { "id": "fakeout-1", "text": "KOLs claim a new BTC supercycle is starting right now.", "userName": "APompliano", "sourceTier": "kol", "createdAt": "2026-02-02T14:00:00Z", "isRetweet": false, "isQuote": false },
+      { "id": "fakeout-2", "text": "Retail BTC feeds are spreading a fresh breakout story with no hard catalyst.", "userName": "BitcoinMagazine", "sourceTier": "kol", "createdAt": "2026-02-02T14:02:00Z", "isRetweet": false, "isQuote": false },
+      { "id": "fakeout-3", "text": "Commentators say BTC is about to rip but cite no first-order event.", "userName": "DocumentingBTC", "sourceTier": "kol", "createdAt": "2026-02-02T14:04:00Z", "isRetweet": false, "isQuote": false }
+    ],
+    "narrativeInput": {
+      "firstEventMinutesAgo": 20,
+      "latestEventMinutesAgo": 2,
+      "totalUniqueAccounts": 5,
+      "positioningConfirmation": 0.1,
+      "marketLinkageConfirmation": 0.1
+    },
+    "confirmationInput": {
+      "priceChange5m": 0.002,
+      "priceChange1h": 0.004,
+      "volumeChange": 0.2,
+      "basisPct": 0.2,
+      "spotVsPerp": 0.1
+    },
+    "referencePrice": 102000
+  },
+  "expectedRegime": "mixed",
+  "expectedTopDriver": "etf-flow",
+  "expectedTradeAdvice": "ignore",
+  "expectedDirection": "observe"
+}

@@ -20,28 +20,45 @@ export class TwitterApiIoClient {
 
   constructor(private apiKey: string) {}
 
-  async searchRecent(query: string, count = 20): Promise<SearchResult> {
+  async searchTweets(query: string, opts: { count?: number; cursor?: string } = {}): Promise<Tweet[]> {
     const params = new URLSearchParams({
       query,
       queryType: 'Latest',
-      cursor: '',
     });
+    if (opts.count) params.set('count', String(opts.count));
+    if (opts.cursor) params.set('cursor', opts.cursor);
     const res = await fetch(`${this.baseUrl}/twitter/tweet/advanced_search?${params}`, {
       headers: { 'X-API-Key': this.apiKey },
     });
     if (!res.ok) throw new Error(`Twitter search error: ${res.status}`);
-    return res.json() as Promise<SearchResult>;
+    const data = (await res.json()) as SearchResult;
+    return data.tweets ?? [];
   }
 
-  async getUserTweets(userName: string, count = 10): Promise<SearchResult> {
+  async getUserLastTweets(userName: string, count = 10): Promise<Tweet[]> {
     const params = new URLSearchParams({
       userName,
-      cursor: '',
+      count: String(count),
     });
     const res = await fetch(`${this.baseUrl}/twitter/user/last_tweets?${params}`, {
       headers: { 'X-API-Key': this.apiKey },
     });
     if (!res.ok) throw new Error(`Twitter user tweets error: ${res.status}`);
-    return res.json() as Promise<SearchResult>;
+    const data = (await res.json()) as SearchResult;
+    return data.tweets ?? [];
+  }
+
+  async searchRecent(query: string, count = 20): Promise<SearchResult> {
+    return {
+      tweets: await this.searchTweets(query, { count }),
+      has_next_page: false,
+    };
+  }
+
+  async getUserTweets(userName: string, count = 10): Promise<SearchResult> {
+    return {
+      tweets: await this.getUserLastTweets(userName, count),
+      has_next_page: false,
+    };
   }
 }

@@ -23,4 +23,23 @@ describe('evaluateTriggerGate', () => {
     expect(result).toHaveProperty('priority');
     expect(result.asset).toBe('BTC');
   });
+
+  it('returns case C when only x resonance is active', () => {
+    const result = evaluateTriggerGate({
+      return1m: 0.001,
+      priceZScore: 0.2,
+      volumeZScore: 0.5,
+      oiChangePct: 0.1,
+      fundingRate: 0.004,
+      fundingMean: 0.004,
+      basisPct: 0.2,
+      basisMean: 0.2,
+      liquidationUsd1h: 2_000_000,
+      liquidationMean: 8_000_000,
+      xResonance: 0.8,
+    });
+
+    expect(result.case_label).toBe('C');
+    expect(result.triggered).toBe(false);
+  });
 });
