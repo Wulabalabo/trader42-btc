@@ -4,7 +4,9 @@ import { resolve } from 'node:path';
 
 let db: Database.Database | null = null;
 
-export function getDb(dbPath: string): Database.Database {
+export type SqliteDatabase = Database.Database;
+
+export function getDb(dbPath: string): SqliteDatabase {
   if (!db) {
     db = new Database(dbPath);
     db.pragma('journal_mode = WAL');
@@ -13,7 +15,7 @@ export function getDb(dbPath: string): Database.Database {
   return db;
 }
 
-export function initDb(dbPath: string): Database.Database {
+export function initDb(dbPath: string): SqliteDatabase {
   const database = getDb(dbPath);
   const schemaPath = resolve(import.meta.dirname, '../../db/schema.sql');
   const schema = readFileSync(schemaPath, 'utf-8');

@@ -9,4 +9,6 @@ playwright-report/
 .env
 .env.local
 .env.*.local
-docs/
+docs/*
+!docs/backend/
+!docs/backend/**

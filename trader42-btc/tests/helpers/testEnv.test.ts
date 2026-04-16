@@ -4,6 +4,14 @@ import { buildEnv } from '../../src/config/env.js';
 describe('env', () => {
   it('requires core connection strings', () => {
     expect(() => buildEnv({})).toThrow(/DATA_PROXY_URL/);
+    expect(() =>
+      buildEnv({
+        DATA_PROXY_URL: 'http://localhost:8088',
+        TWITTER_API_KEY: 'test-key',
+        OPENAI_API_KEY: 'sk-test',
+        DEEPSEEK_API_KEY: 'sk-test',
+      }),
+    ).toThrow(/DATA_PROXY_TOKEN/);
   });
 
   it('accepts valid env with defaults', () => {

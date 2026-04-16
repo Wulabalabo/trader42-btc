@@ -1,19 +1,24 @@
-interface LLMConfig {
+import { parseJsonCompletion } from './llmJson.js';
+import { getStepLlmPolicy, type StepLlmKey } from './llmPolicy.js';
+
+export interface LLMConfig {
   openaiApiKey: string;
   deepseekApiKey: string;
 }
 
-interface CompletionRequest {
-  model: 'openai' | 'deepseek';
+export type LLMProvider = 'openai' | 'deepseek';
+
+export interface CompletionRequest {
+  model: LLMProvider;
   messages: Array<{ role: string; content: string }>;
   maxTokens?: number;
   temperature?: number;
-  fallback?: 'openai' | 'deepseek';
+  fallback?: LLMProvider;
 }
 
-interface CompletionResponse {
+export interface CompletionResponse {
   content: string;
-  usedModel: 'openai' | 'deepseek';
+  usedModel: LLMProvider;
   inputTokens: number;
   outputTokens: number;
 }
@@ -29,7 +34,7 @@ const MODELS: Record<string, string> = {
 };
 
 export class LLMGateway {
-  constructor(private config: LLMConfig) {}
+  constructor(private readonly config: LLMConfig) {}
 
   async complete(req: CompletionRequest): Promise<CompletionResponse> {
     try {
@@ -43,8 +48,23 @@ export class LLMGateway {
     }
   }
 
+  async completeForStep(step: StepLlmKey, req: Omit<CompletionRequest, 'model' | 'fallback'>): Promise<CompletionResponse> {
+    const policy = getStepLlmPolicy(step);
+
+    return this.complete({
+      ...req,
+      model: policy.model,
+      fallback: policy.fallback,
+    });
+  }
+
+  async completeJson<T>(req: CompletionRequest): Promise<T> {
+    const response = await this.complete(req);
+    return parseJsonCompletion<T>(response.content);
+  }
+
   private async callProvider(
-    provider: 'openai' | 'deepseek',
+    provider: LLMProvider,
     req: CompletionRequest,
   ): Promise<CompletionResponse> {
     const apiKey =

@@ -86,3 +86,10 @@ CREATE TABLE IF NOT EXISTS shadow_book (
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   closed_at TEXT
 );
+
+CREATE TABLE IF NOT EXISTS step_snapshots (
+  step_key TEXT PRIMARY KEY,
+  module_state TEXT NOT NULL DEFAULT 'idle',
+  last_updated_at TEXT,
+  payload_json TEXT
+);

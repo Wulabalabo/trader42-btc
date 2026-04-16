@@ -23,16 +23,15 @@ BTC-only event, narrative, confirmation, and trade-advice system.
 
 ## Architecture Overview
 
-Single TypeScript backend handling ingestion, scoring, LLM orchestration, APIs, and shadow-book persistence. The system starts with deterministic rules and typed schemas, then adds LLM explanation layers on top so outputs remain auditable when X data or model outputs are noisy.
+Single TypeScript backend handling ingestion, scoring, LLM orchestration, APIs, and shadow-book persistence. Binance stays direct, while OpenBB and AKTools are accessed only through the authenticated data proxy so the integration contract is explicit and auditable.
 
 ```
-Binance WS/REST ──┐
-OpenBB REST ──────┤
-AKTools REST ─────┤──► Step 0: Market Regime
-twitterapi.io ────┤       ↓
-                  │   Step 1.5: Trigger Gate
-                  │       ↓
-                  └──► Step 2: X Event Capture
+Binance WS/REST ─────────────┐
+Data Proxy (OpenBB/AKTools) ─┤──► Step 0: Market Regime
+twitterapi.io ───────────────┤       ↓
+                             │   Step 1.5: Trigger Gate
+                             │       ↓
+                             └──► Step 2: X Event Capture
                           ↓
                       Step 5: Trade Advice
                           ↓

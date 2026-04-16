@@ -23,16 +23,15 @@
 
 ## 架构概览
 
-这是一个单体 TypeScript 后端，负责数据接入、评分、LLM 编排、API 服务以及影子账本持久化。系统先用确定性规则和类型化 schema 保持可审计性，再在其上叠加 LLM 解释层，以便在 X 数据或模型输出噪声较大时，仍能输出可追踪、可解释的结果。
+这是一个单体 TypeScript 后端，负责数据接入、评分、LLM 编排、API 服务以及影子账本持久化。Binance 直连，OpenBB 和 AKTools 统一只通过带鉴权的 Data Proxy 访问，这样集成契约更明确，也更便于审计。系统先用确定性规则和类型化 schema 保持可审计性，再在其上叠加 LLM 解释层，以便在 X 数据或模型输出噪声较大时，仍能输出可追踪、可解释的结果。
 
 ```
-Binance WS/REST ──┐
-OpenBB REST ──────┤
-AKTools REST ─────┤──► Step 0: Market Regime
-twitterapi.io ────┤       ↓
-                  │   Step 1.5: Trigger Gate
-                  │       ↓
-                  └──► Step 2: X Event Capture
+Binance WS/REST ─────────────┐
+Data Proxy（OpenBB/AKTools）─┤──► Step 0: Market Regime
+twitterapi.io ───────────────┤       ↓
+                             │   Step 1.5: Trigger Gate
+                             │       ↓
+                             └──► Step 2: X Event Capture
                           ↓
                       Step 5: Trade Advice
                           ↓
@@ -67,8 +66,7 @@ twitterapi.io ────┤       ↓
   - Linux：`sudo apt install python3 build-essential`
 
 完整功能还依赖以下外部服务：
-- **OpenBB**（自托管）- 宏观数据
-- **AKTools**（自托管）- ETF / 稳定币流数据
+- **Data Proxy**（Docker 鉴权代理）- 统一转发 OpenBB 和 AKTools
 - 账户：**twitterapi.io**、**OpenAI**、**DeepSeek**
 
 ---
@@ -97,9 +95,9 @@ BINANCE_BASE_URL=https://api.binance.com          # 默认值
 BINANCE_FUTURES_BASE_URL=https://fapi.binance.com # 默认值
 BINANCE_WS_URL=wss://stream.binance.com:9443/ws   # 默认值
 
-# ─── 自托管服务（必需） ───────────────────────────
-OPENBB_BASE_URL=http://localhost:8001             # 你的 OpenBB 实例
-AKTOOLS_BASE_URL=http://localhost:8002            # 你的 AKTools 实例
+# ─── Data Proxy（OpenBB + AKTools 鉴权代理）───────
+DATA_PROXY_URL=http://localhost:8088              # 代理地址
+DATA_PROXY_TOKEN=your_proxy_api_token             # Bearer Token
 
 # ─── API Key（必需） ──────────────────────────────
 TWITTER_API_KEY=your_twitterapi_io_key            # 来自 twitterapi.io
@@ -114,8 +112,8 @@ DEEPSEEK_API_KEY=sk-...                           # DeepSeek API Key
 | `BINANCE_BASE_URL` | 否 | `https://api.binance.com` | Binance 现货 REST API |
 | `BINANCE_FUTURES_BASE_URL` | 否 | `https://fapi.binance.com` | Binance USDT-M 合约 REST API |
 | `BINANCE_WS_URL` | 否 | `wss://stream.binance.com:9443/ws` | Binance WebSocket 流 |
-| `OPENBB_BASE_URL` | **是** | — | 自托管 OpenBB API |
-| `AKTOOLS_BASE_URL` | **是** | — | 自托管 AKTools API |
+| `DATA_PROXY_URL` | **是** | — | Data Proxy 地址（统一代理 OpenBB + AKTools） |
+| `DATA_PROXY_TOKEN` | **是** | — | Data Proxy 的 Bearer Token |
 | `TWITTER_API_KEY` | **是** | — | twitterapi.io API Key |
 | `OPENAI_API_KEY` | **是** | — | OpenAI API Key（gpt-4o-mini） |
 | `DEEPSEEK_API_KEY` | **是** | — | DeepSeek API Key（deepseek-chat） |
@@ -581,31 +579,35 @@ ws.on('message', (data) => { /* 处理流数据 */ });
 ws.disconnect();
 ```
 
-### OpenBB（自托管）
+### OpenBB（经 Data Proxy 转发）
+
+所有 OpenBB 请求都通过 `DATA_PROXY_URL/openbb/...` 发出，并附带 Bearer Token。
 
 ```typescript
 import { OpenBBMacroClient } from './integrations/openbb/macroClient.js';
 import { OpenBBCalendarClient } from './integrations/openbb/calendarClient.js';
 
-const macro = new OpenBBMacroClient(env.OPENBB_BASE_URL);
+const macro = new OpenBBMacroClient(env.DATA_PROXY_URL, env.DATA_PROXY_TOKEN);
 await macro.getDXY();                    // → { value, timestamp }
 await macro.getTreasuryYields();         // → { us2y, us10y }
 await macro.getEquityIndex('NQ=F');      // → { value }
 
-const calendar = new OpenBBCalendarClient(env.OPENBB_BASE_URL);
+const calendar = new OpenBBCalendarClient(env.DATA_PROXY_URL, env.DATA_PROXY_TOKEN);
 await calendar.getUpcomingEvents();      // → CalendarEvent[]
 ```
 
-### AKTools（自托管）
+### AKTools（经 Data Proxy 转发）
+
+所有 AKTools 请求都通过 `DATA_PROXY_URL/aktools/...` 发出，并附带 Bearer Token。
 
 ```typescript
 import { AKToolsETFFlowClient } from './integrations/aktools/etfFlowClient.js';
 import { AKToolsStablecoinClient } from './integrations/aktools/stablecoinClient.js';
 
-const etf = new AKToolsETFFlowClient(env.AKTOOLS_BASE_URL);
+const etf = new AKToolsETFFlowClient(env.DATA_PROXY_URL, env.DATA_PROXY_TOKEN);
 await etf.getBtcEtfNetFlow();            // → { netFlowUsd, date }
 
-const stable = new AKToolsStablecoinClient(env.AKTOOLS_BASE_URL);
+const stable = new AKToolsStablecoinClient(env.DATA_PROXY_URL, env.DATA_PROXY_TOKEN);
 await stable.getStablecoinNetFlow();     // → { netFlow, date }
 ```
 
