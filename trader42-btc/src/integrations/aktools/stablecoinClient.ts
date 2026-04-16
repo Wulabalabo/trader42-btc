@@ -1,8 +1,17 @@
 export class AKToolsStablecoinClient {
-  constructor(private baseUrl: string) {}
+  private readonly headers: Record<string, string>;
+
+  constructor(
+    private baseUrl: string,
+    token: string,
+  ) {
+    this.headers = { Authorization: `Bearer ${token}` };
+  }
 
   async getStablecoinNetFlow(): Promise<{ netFlow: number; date: string }> {
-    const res = await fetch(`${this.baseUrl}/api/public/stablecoin_flow`);
+    const res = await fetch(`${this.baseUrl}/aktools/api/public/stablecoin_flow`, {
+      headers: this.headers,
+    });
     if (!res.ok) throw new Error(`AKTools stablecoin flow error: ${res.status}`);
     const data = (await res.json()) as Record<string, unknown>;
     return {

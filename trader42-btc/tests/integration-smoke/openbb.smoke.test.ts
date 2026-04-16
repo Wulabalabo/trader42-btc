@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { OpenBBMacroClient } from '../../src/integrations/openbb/macroClient.js';
 
 describe('OpenBB smoke tests', { tags: ['smoke'] }, () => {
-  const baseUrl = process.env.OPENBB_BASE_URL ?? 'http://localhost:8001';
-  const client = new OpenBBMacroClient(baseUrl);
+  const proxyUrl = process.env.DATA_PROXY_URL ?? 'http://localhost:8088';
+  const proxyToken = process.env.DATA_PROXY_TOKEN ?? 'test-token';
+  const client = new OpenBBMacroClient(proxyUrl, proxyToken);
 
   it('fetches DXY latest value', async () => {
     const dxy = await client.getDXY();

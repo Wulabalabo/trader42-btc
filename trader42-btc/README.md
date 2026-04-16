@@ -67,8 +67,7 @@ twitterapi.io ────┤       ↓
   - Linux: `sudo apt install python3 build-essential`
 
 External services (must be running for full functionality):
-- **OpenBB** (self-hosted) — macroeconomic data
-- **AKTools** (self-hosted) — ETF / stablecoin flow data
+- **Data Proxy** (Docker) — auth-proxy fronting OpenBB + AKTools via `docker compose up`
 - Accounts for: **twitterapi.io**, **OpenAI**, **DeepSeek**
 
 ---
@@ -97,9 +96,9 @@ BINANCE_BASE_URL=https://api.binance.com          # default
 BINANCE_FUTURES_BASE_URL=https://fapi.binance.com # default
 BINANCE_WS_URL=wss://stream.binance.com:9443/ws   # default
 
-# ─── Self-hosted services (required) ─────────────
-OPENBB_BASE_URL=http://localhost:8001             # your OpenBB instance
-AKTOOLS_BASE_URL=http://localhost:8002            # your AKTools instance
+# ─── Data Proxy (Docker auth-proxy for OpenBB + AKTools) ───
+DATA_PROXY_URL=http://localhost:8088              # auth-proxy address
+DATA_PROXY_TOKEN=your_proxy_api_token             # shared Bearer token
 
 # ─── API Keys (required) ─────────────────────────
 TWITTER_API_KEY=your_twitterapi_io_key            # from twitterapi.io
@@ -114,8 +113,8 @@ DEEPSEEK_API_KEY=sk-...                           # DeepSeek API key
 | `BINANCE_BASE_URL` | No | `https://api.binance.com` | Binance Spot REST API |
 | `BINANCE_FUTURES_BASE_URL` | No | `https://fapi.binance.com` | Binance USDT-M Futures API |
 | `BINANCE_WS_URL` | No | `wss://stream.binance.com:9443/ws` | Binance WebSocket stream |
-| `OPENBB_BASE_URL` | **Yes** | — | Self-hosted OpenBB API |
-| `AKTOOLS_BASE_URL` | **Yes** | — | Self-hosted AKTools API |
+| `DATA_PROXY_URL` | **Yes** | — | Docker auth-proxy URL (fronts OpenBB + AKTools) |
+| `DATA_PROXY_TOKEN` | **Yes** | — | Bearer token for auth-proxy |
 | `TWITTER_API_KEY` | **Yes** | — | twitterapi.io API key |
 | `OPENAI_API_KEY` | **Yes** | — | OpenAI API key (gpt-4o-mini) |
 | `DEEPSEEK_API_KEY` | **Yes** | — | DeepSeek API key (deepseek-chat) |
@@ -581,31 +580,35 @@ ws.on('message', (data) => { /* handle stream data */ });
 ws.disconnect();
 ```
 
-### OpenBB (Self-hosted)
+### OpenBB (via Data Proxy)
+
+All OpenBB requests go through the Docker auth-proxy at `DATA_PROXY_URL/openbb/...` with Bearer token.
 
 ```typescript
 import { OpenBBMacroClient } from './integrations/openbb/macroClient.js';
 import { OpenBBCalendarClient } from './integrations/openbb/calendarClient.js';
 
-const macro = new OpenBBMacroClient(env.OPENBB_BASE_URL);
+const macro = new OpenBBMacroClient(env.DATA_PROXY_URL, env.DATA_PROXY_TOKEN);
 await macro.getDXY();                    // → { value, timestamp }
 await macro.getTreasuryYields();         // → { us2y, us10y }
 await macro.getEquityIndex('NQ=F');      // → { value }
 
-const calendar = new OpenBBCalendarClient(env.OPENBB_BASE_URL);
+const calendar = new OpenBBCalendarClient(env.DATA_PROXY_URL, env.DATA_PROXY_TOKEN);
 await calendar.getUpcomingEvents();      // → CalendarEvent[]
 ```
 
-### AKTools (Self-hosted)
+### AKTools (via Data Proxy)
+
+All AKTools requests go through the Docker auth-proxy at `DATA_PROXY_URL/aktools/...` with Bearer token.
 
 ```typescript
 import { AKToolsETFFlowClient } from './integrations/aktools/etfFlowClient.js';
 import { AKToolsStablecoinClient } from './integrations/aktools/stablecoinClient.js';
 
-const etf = new AKToolsETFFlowClient(env.AKTOOLS_BASE_URL);
+const etf = new AKToolsETFFlowClient(env.DATA_PROXY_URL, env.DATA_PROXY_TOKEN);
 await etf.getBtcEtfNetFlow();            // → { netFlowUsd, date }
 
-const stable = new AKToolsStablecoinClient(env.AKTOOLS_BASE_URL);
+const stable = new AKToolsStablecoinClient(env.DATA_PROXY_URL, env.DATA_PROXY_TOKEN);
 await stable.getStablecoinNetFlow();     // → { netFlow, date }
 ```
 

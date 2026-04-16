@@ -3,9 +3,10 @@ import { AKToolsETFFlowClient } from '../../src/integrations/aktools/etfFlowClie
 import { AKToolsStablecoinClient } from '../../src/integrations/aktools/stablecoinClient.js';
 
 describe('AKTools smoke tests', { tags: ['smoke'] }, () => {
-  const baseUrl = process.env.AKTOOLS_BASE_URL ?? 'http://localhost:8002';
-  const etf = new AKToolsETFFlowClient(baseUrl);
-  const stablecoin = new AKToolsStablecoinClient(baseUrl);
+  const proxyUrl = process.env.DATA_PROXY_URL ?? 'http://localhost:8088';
+  const proxyToken = process.env.DATA_PROXY_TOKEN ?? 'test-token';
+  const etf = new AKToolsETFFlowClient(proxyUrl, proxyToken);
+  const stablecoin = new AKToolsStablecoinClient(proxyUrl, proxyToken);
 
   it('fetches BTC ETF net flow', async () => {
     const flow = await etf.getBtcEtfNetFlow();

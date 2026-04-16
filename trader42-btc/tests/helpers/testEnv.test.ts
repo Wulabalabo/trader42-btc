@@ -3,13 +3,13 @@ import { buildEnv } from '../../src/config/env.js';
 
 describe('env', () => {
   it('requires core connection strings', () => {
-    expect(() => buildEnv({})).toThrow(/OPENBB_BASE_URL/);
+    expect(() => buildEnv({})).toThrow(/DATA_PROXY_URL/);
   });
 
   it('accepts valid env with defaults', () => {
     const env = buildEnv({
-      OPENBB_BASE_URL: 'http://localhost:8001',
-      AKTOOLS_BASE_URL: 'http://localhost:8002',
+      DATA_PROXY_URL: 'http://localhost:8088',
+      DATA_PROXY_TOKEN: 'test-token',
       TWITTER_API_KEY: 'test-key',
       OPENAI_API_KEY: 'sk-test',
       DEEPSEEK_API_KEY: 'sk-test',
